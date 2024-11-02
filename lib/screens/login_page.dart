@@ -25,7 +25,7 @@ class _LoginPageState extends State<LoginPage> {
               Text(
                 'Welcome to Yetiştir',
                 style: TextStyle(
-                  fontSize: 28,
+                  fontSize: 27,
                   fontWeight: FontWeight.bold,
                   color: Colors.black87,
                 ),
