@@ -3,6 +3,7 @@ import '../models/task_list.dart';
 import '../models/category.dart';
 import 'todo_list_page.dart';
 import '../services/storage_service.dart';
+import 'profile_page.dart';
 
 class HomePage extends StatefulWidget {
   @override
@@ -112,7 +113,20 @@ class _HomePageState extends State<HomePage> {
               ),
             ),
           ),
-          SizedBox(width: 48), // Balance for hamburger menu
+          GestureDetector(
+            onTap: () {
+              // Navigate to profile page
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => ProfilePage()),
+              );
+            },
+            child: CircleAvatar(
+              radius: 20,
+              backgroundColor: Color(0xFFCDC1FF),
+              child: Icon(Icons.person, color: Colors.black87),
+            ),
+          ),
         ],
       ),
     );
