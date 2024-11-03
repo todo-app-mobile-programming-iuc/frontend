@@ -17,6 +17,12 @@ class TodoListPage extends StatefulWidget {
 class _TodoListPageState extends State<TodoListPage> {
   final TextEditingController _textController = TextEditingController();
 
+  @override
+  void dispose() {
+    _textController.dispose();
+    super.dispose();
+  }
+
   void _addTodo(String title) {
     setState(() {
       widget.category.todos.add(Todo(title: title));

@@ -4,6 +4,7 @@ import '../models/category.dart';
 import 'todo_list_page.dart';
 import '../services/storage_service.dart';
 import 'profile_page.dart';
+import 'alarm_page.dart';
 
 class HomePage extends StatefulWidget {
   @override
@@ -70,6 +71,54 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Color(0xFFF5F5F0),
+      drawer: Drawer(
+        child: Container(
+          color: Color(0xFFF5F5F0),
+          child: ListView(
+            padding: EdgeInsets.zero,
+            children: [
+              DrawerHeader(
+                decoration: BoxDecoration(
+                  color: Color(0xFFBFECFF),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    Text(
+                      'Yetiştir',
+                      style: TextStyle(
+                        color: Colors.black87,
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    SizedBox(height: 8),
+                  ],
+                ),
+              ),
+              ListTile(
+                leading: Icon(Icons.alarm, color: Colors.black87),
+                title: Text(
+                  'Alarms',
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: Colors.black87,
+                  ),
+                ),
+                onTap: () {
+                  Navigator.pop(context); // Close drawer
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => AlarmPage()),
+                  );
+                },
+              ),
+        
+            ],
+          ),
+        ),
+      ),
       body: SafeArea(
         child: Column(
           children: [
@@ -94,40 +143,41 @@ class _HomePageState extends State<HomePage> {
   Widget _buildTopBar() {
     return Padding(
       padding: const EdgeInsets.all(16.0),
-      child: Row(
-        children: [
-          IconButton(
-            icon: Icon(Icons.menu),
-            onPressed: () {
-              // Hamburger menu functionality
-            },
-          ),
-          Expanded(
-            child: Center(
-              child: Text(
-                'Yetiştir',
-                style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
+      child: Builder(
+        builder: (context) => Row(
+          children: [
+            IconButton(
+              icon: Icon(Icons.menu),
+              onPressed: () {
+                Scaffold.of(context).openDrawer();
+              },
+            ),
+            Expanded(
+              child: Center(
+                child: Text(
+                  'Yetiştir',
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
             ),
-          ),
-          GestureDetector(
-            onTap: () {
-              // Navigate to profile page
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => ProfilePage()),
-              );
-            },
-            child: CircleAvatar(
-              radius: 20,
-              backgroundColor: Color(0xFFCDC1FF),
-              child: Icon(Icons.person, color: Colors.black87),
+            GestureDetector(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => ProfilePage()),
+                );
+              },
+              child: CircleAvatar(
+                radius: 20,
+                backgroundColor: Color(0xFFCDC1FF),
+                child: Icon(Icons.person, color: Colors.black87),
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
