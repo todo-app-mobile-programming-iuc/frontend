@@ -5,6 +5,7 @@ import 'todo_list_page.dart';
 import '../services/storage_service.dart';
 import 'profile_page.dart';
 import 'alarm_page.dart';
+import 'map_page.dart';
 
 class HomePage extends StatefulWidget {
   @override
@@ -114,7 +115,23 @@ class _HomePageState extends State<HomePage> {
                   );
                 },
               ),
-        
+              ListTile(
+                leading: Icon(Icons.map, color: Colors.black87),
+                title: Text(
+                  'Map',
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: Colors.black87,
+                  ),
+                ),
+                onTap: () {
+                  Navigator.pop(context); // Close drawer
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => MapPage()),
+                  );
+                },
+              ),
             ],
           ),
         ),
