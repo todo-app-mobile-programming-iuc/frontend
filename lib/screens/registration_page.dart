@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
 import 'login_page.dart';
+import '../utils/validators.dart';
 
 class RegistrationPage extends StatefulWidget {
   @override
@@ -16,6 +17,16 @@ class _RegistrationPageState extends State<RegistrationPage> {
   bool _isLoading = false;
 
   Future<void> _handleRegistration() async {
+    if (!Validators.isValidEmail(_emailController.text.trim())) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Please enter a valid email address'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
     setState(() {
       _isLoading = true;
     });
