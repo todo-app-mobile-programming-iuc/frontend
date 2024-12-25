@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'profile_setup_page.dart';
+import '../services/auth_service.dart';
+import 'login_page.dart';
 
 class RegistrationPage extends StatefulWidget {
   @override
@@ -11,6 +12,47 @@ class _RegistrationPageState extends State<RegistrationPage> {
   final _passwordController = TextEditingController();
   final _nameController = TextEditingController();
   final _surnameController = TextEditingController();
+  final _authService = AuthService();
+  bool _isLoading = false;
+
+  Future<void> _handleRegistration() async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      await _authService.register(
+        _emailController.text.trim(),
+        _passwordController.text,
+        _nameController.text.trim(),
+      );
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Registration successful! Please login.')),
+        );
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => LoginPage()),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Registration failed: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -77,15 +119,18 @@ class _RegistrationPageState extends State<RegistrationPage> {
             ),
             SizedBox(height: 24),
             ElevatedButton(
-              onPressed: () {            
-                Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(builder: (context) => ProfileSetupPage()),
-                );
-              },
+              onPressed: _isLoading ? null : _handleRegistration,
               child: Padding(
                 padding: const EdgeInsets.all(16.0),
-                child: Text('Continue'),
+                child: _isLoading
+                    ? SizedBox(
+                        height: 20,
+                        width: 20,
+                        child: CircularProgressIndicator(
+                          color: Colors.black87,
+                        ),
+                      )
+                    : Text('Register'),
               ),
               style: ElevatedButton.styleFrom(
                 backgroundColor: Color(0xFFCDC1FF),
@@ -109,4 +154,4 @@ class _RegistrationPageState extends State<RegistrationPage> {
     _surnameController.dispose();
     super.dispose();
   }
-} 
+}
