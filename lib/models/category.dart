@@ -1,3 +1,5 @@
+import 'alarm_sound.dart';
+
 class TodoCategory {
   String name;
   List<Todo> todos;
@@ -12,6 +14,13 @@ class TodoCategory {
 class Todo {
   String title;
   bool isCompleted;
+  DateTime? reminderDateTime;
+  AlarmSound? alarmSound;
 
-  Todo({required this.title, this.isCompleted = false});
+  Todo({
+    required this.title, 
+    this.isCompleted = false,
+    this.reminderDateTime,
+    this.alarmSound,
+  });
 } 

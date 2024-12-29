@@ -1,10 +1,19 @@
 import 'package:flutter/material.dart';
+import '../widgets/sound_selection_dialog.dart';
+import '../models/alarm_sound.dart';
 
 class AlarmPage extends StatefulWidget {
-  static List<TimeOfDay> alarms = [];
+  static List<AlarmData> alarms = [];
 
   @override
   _AlarmPageState createState() => _AlarmPageState();
+}
+
+class AlarmData {
+  final TimeOfDay time;
+  final AlarmSound sound;
+
+  AlarmData({required this.time, required this.sound});
 }
 
 class _AlarmPageState extends State<AlarmPage> {
@@ -68,15 +77,25 @@ class _AlarmPageState extends State<AlarmPage> {
     );
 
     if (selectedTime != null) {
-      setState(() {
-        AlarmPage.alarms.add(selectedTime);
-      });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Alarm set for ${selectedTime.format(context)}'),
-          backgroundColor: Color(0xFFCDC1FF),
-        ),
+      final AlarmSound? selectedSound = await showDialog<AlarmSound>(
+        context: context,
+        builder: (context) => SoundSelectionDialog(),
       );
+
+      if (selectedSound != null) {
+        setState(() {
+          AlarmPage.alarms.add(AlarmData(
+            time: selectedTime,
+            sound: selectedSound,
+          ));
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Alarm set for ${selectedTime.format(context)}'),
+            backgroundColor: Color(0xFFCDC1FF),
+          ),
+        );
+      }
     }
   }
 
@@ -164,7 +183,7 @@ class _AlarmPageState extends State<AlarmPage> {
                     child: ListTile(
                       leading: Icon(Icons.alarm, color: Colors.black87),
                       title: Text(
-                        alarm.format(context),
+                        alarm.time.format(context),
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
