@@ -5,7 +5,7 @@ import 'todo_list_page.dart';
 import '../services/storage_service.dart';
 import 'profile_page.dart';
 import 'alarm_page.dart';
-import 'map_page.dart';
+import 'ai_page.dart';
 
 class HomePage extends StatefulWidget {
   @override
@@ -116,9 +116,9 @@ class _HomePageState extends State<HomePage> {
                 },
               ),
               ListTile(
-                leading: Icon(Icons.map, color: Colors.black87),
+                leading: Icon(Icons.psychology, color: Colors.black87),
                 title: Text(
-                  'Map',
+                  'AI Assistant',
                   style: TextStyle(
                     fontSize: 16,
                     color: Colors.black87,
@@ -128,7 +128,7 @@ class _HomePageState extends State<HomePage> {
                   Navigator.pop(context); // Close drawer
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => MapPage()),
+                    MaterialPageRoute(builder: (context) => AIPage()),
                   );
                 },
               ),
