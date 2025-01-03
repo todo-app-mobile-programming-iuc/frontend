@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'registration_page.dart';
 import 'home_page.dart';
 import '../services/auth_service.dart';
@@ -13,6 +14,7 @@ class _LoginPageState extends State<LoginPage> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _authService = AuthService();
+  final _secureStorage = FlutterSecureStorage();
   bool _isLoading = false;
 
   Future<void> _handleLogin() async {
@@ -31,11 +33,15 @@ class _LoginPageState extends State<LoginPage> {
     });
 
     try {
-      await _authService.login(
+      final String? token = await _authService.login(
         _emailController.text.trim(),
         _passwordController.text,
       );
-      
+
+      if (token != null) {
+        await _secureStorage.write(key: 'auth_token', value: token);
+      }
+
       if (mounted) {
         Navigator.pushReplacement(
           context,
