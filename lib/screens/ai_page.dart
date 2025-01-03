@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import '../models/task_list.dart';
+import '../models/category.dart';
+import '../screens/alarm_page.dart';
 
 class Message {
   final String text;
@@ -83,9 +86,16 @@ class _AIPageState extends State<AIPage> {
       };
     }).toList();
 
+    // Fetch todos and alarms
+    final todos = await _getTodos();
+    final alarms = await _getAlarms();
+
+    // system instruction message
+    final instruction = "You are a friendly assistant that helps users with their todos and alarms. Here are the user's todos: $todos and alarms: $alarms.";
+
     final body = jsonEncode({
       'messages': [
-        {'role': 'system', 'content': 'You are a friendly assistant'},
+        {'role': 'system', 'content': instruction},
         ...messages,
       ],
     });
@@ -110,6 +120,26 @@ class _AIPageState extends State<AIPage> {
 
   Future<String?> _getUserToken() async {
     return await _secureStorage.read(key: 'auth_token');
+  }
+
+  Future<List<Map<String, dynamic>>> _getTodos() async {
+    // Fetch todos from storage or API
+    // Example:
+    final todos = [
+      {'title': 'Buy groceries', 'isCompleted': false},
+      {'title': 'Walk the dog', 'isCompleted': true},
+    ];
+    return todos;
+  }
+
+  Future<List<Map<String, dynamic>>> _getAlarms() async {
+    // Fetch alarms from storage or API
+    // Example:
+    final alarms = [
+      {'time': '07:00 AM', 'sound': 'Default'},
+      {'time': '08:00 AM', 'sound': 'Birds'},
+    ];
+    return alarms;
   }
 
   void _scrollToBottom() {
