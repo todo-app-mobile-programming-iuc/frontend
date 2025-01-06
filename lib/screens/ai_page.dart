@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class Message {
   final String text;
@@ -21,6 +24,7 @@ class _AIPageState extends State<AIPage> {
   final TextEditingController _messageController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   final List<Message> _messages = [];
+  final _secureStorage = FlutterSecureStorage();
   bool _isTyping = false;
 
   void _sendMessage() async {
@@ -40,21 +44,99 @@ class _AIPageState extends State<AIPage> {
     _messageController.clear();
     _scrollToBottom();
 
-    // Simulate AI response (replace with actual AI integration)
-    await Future.delayed(Duration(seconds: 1));
-    
-    final aiMessage = Message(
-      text: "I'm an AI assistant. I'm here to help you with your tasks and schedule.",
-      isUser: false,
-      timestamp: DateTime.now(),
-    );
+    final response = await _sendToBackend();
 
-    setState(() {
-      _messages.add(aiMessage);
-      _isTyping = false;
+    if (response != null) {
+      final aiMessage = Message(
+        text: response,
+        isUser: false,
+        timestamp: DateTime.now(),
+      );
+
+      setState(() {
+        _messages.add(aiMessage);
+        _isTyping = false;
+      });
+
+      _scrollToBottom();
+    }
+  }
+
+  Future<String?> _sendToBackend() async {
+    final token = await _getUserToken();
+    if (token == null) {
+      print('Failed to get user token');
+      return null;
+    }
+
+    final url = Uri.parse('https://backend.ahmetcanisik5458675.workers.dev/ai');
+    print('token: $token');
+    final headers = {
+      'Authorization': 'Bearer $token',
+      'Content-Type': 'application/json',
+    };
+
+    final messages = _messages.map((message) {
+      return {
+        'role': message.isUser ? 'user' : 'assistant',
+        'content': message.text,
+      };
+    }).toList();
+
+    // Fetch todos and alarms
+    final todos = await _getTodos();
+    final alarms = await _getAlarms();
+
+    // system instruction message
+    final instruction = "You are a friendly assistant that helps users with their todos and alarms. Here are the user's todos: $todos and alarms: $alarms.";
+
+    final body = jsonEncode({
+      'messages': [
+        {'role': 'system', 'content': instruction},
+        ...messages,
+      ],
     });
+    print('body: $body');
 
-    _scrollToBottom();
+    try {
+      final response = await http.post(url, headers: headers, body: body);
+      print('Response status: ${response.statusCode}');
+      print('Response body: ${response.body}');
+      if (response.statusCode == 200) {
+        final decodedData = jsonDecode(response.body);
+        return decodedData['response'];
+      } else {
+        print('Failed to get response from backend');
+        return null;
+      }
+    } catch (e) {
+      print('Error: $e');
+      return null;
+    }
+  }
+
+  Future<String?> _getUserToken() async {
+    return await _secureStorage.read(key: 'auth_token');
+  }
+
+  Future<List<Map<String, dynamic>>> _getTodos() async {
+    // Fetch todos from storage or API
+    // Example:
+    final todos = [
+      {'title': 'Buy groceries', 'isCompleted': false},
+      {'title': 'Walk the dog', 'isCompleted': true},
+    ];
+    return todos;
+  }
+
+  Future<List<Map<String, dynamic>>> _getAlarms() async {
+    // Fetch alarms from storage or API
+    // Example:
+    final alarms = [
+      {'time': '07:00 AM', 'sound': 'Default'},
+      {'time': '08:00 AM', 'sound': 'Birds'},
+    ];
+    return alarms;
   }
 
   void _scrollToBottom() {
@@ -235,4 +317,4 @@ class _AIPageState extends State<AIPage> {
     _scrollController.dispose();
     super.dispose();
   }
-} 
+}

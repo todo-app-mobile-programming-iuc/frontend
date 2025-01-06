@@ -1,16 +1,28 @@
 import 'package:shared_preferences/shared_preferences.dart';
 import 'api_service.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 class AuthService {
   final ApiService _apiService = ApiService();
   static const String tokenKey = 'auth_token';
 
-  Future<void> login(String email, String password) async {
-    try {
-      final token = await _apiService.login(email, password);
+  Future<String?> login(String email, String password) async {
+    final url = Uri.parse('https://backend.ahmetcanisik5458675.workers.dev/user/login');
+    final response = await http.post(
+      url,
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({'email': email, 'password': password}),
+    );
+    print('response: ${response.body}');
+
+    if (response.statusCode == 200) {
+      final responseBody = jsonDecode(response.body);
+      final token = responseBody['token']; // Ensure the token is returned
       await _saveToken(token);
-    } catch (e) {
-      rethrow;
+      return token;
+    } else {
+      throw Exception('Failed to login');
     }
   }
 
