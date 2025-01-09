@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'alarm_page.dart';
+import 'todo_list_page.dart';
 
 class Message {
   final String text;
@@ -120,22 +122,25 @@ class _AIPageState extends State<AIPage> {
   }
 
   Future<List<Map<String, dynamic>>> _getTodos() async {
-    // Fetch todos from storage or API
-    // Example:
-    final todos = [
-      {'title': 'Buy groceries', 'isCompleted': false},
-      {'title': 'Walk the dog', 'isCompleted': true},
-    ];
+    // Fetch todos from the TodoListPage
+    final todos = TodoListPage.todos.map((todo) {
+      return {
+        'title': todo.title,
+        'isCompleted': todo.isCompleted,
+        'reminderDateTime': todo.reminderDateTime?.toIso8601String(),
+      };
+    }).toList();
     return todos;
   }
 
   Future<List<Map<String, dynamic>>> _getAlarms() async {
-    // Fetch alarms from storage or API
-    // Example:
-    final alarms = [
-      {'time': '07:00 AM', 'sound': 'Default'},
-      {'time': '08:00 AM', 'sound': 'Birds'},
-    ];
+    // Fetch alarms from the AlarmPage
+    final alarms = AlarmPage.alarms.map((alarm) {
+      return {
+        'time': alarm.time.format(context),
+        'sound': alarm.sound.name,
+      };
+    }).toList();
     return alarms;
   }
 

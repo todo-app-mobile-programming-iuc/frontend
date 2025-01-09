@@ -8,6 +8,8 @@ class TodoListPage extends StatefulWidget {
   final TodoCategory category;
   final VoidCallback onTodoListChanged;
 
+  static List<Todo> todos = [];
+
   TodoListPage({
     required this.category,
     required this.onTodoListChanged,
@@ -107,6 +109,7 @@ class _TodoListPageState extends State<TodoListPage> {
 
     setState(() {
       widget.category.todos.add(todo);
+      TodoListPage.todos.add(todo);
     });
 
     // Schedule notification
@@ -137,6 +140,7 @@ class _TodoListPageState extends State<TodoListPage> {
   void _removeTodo(int index) {
     setState(() {
       widget.category.todos.removeAt(index);
+      TodoListPage.todos.removeAt(index);
     });
     widget.onTodoListChanged();
   }
@@ -371,4 +375,4 @@ class _TodoListPageState extends State<TodoListPage> {
       ),
     );
   }
-} 
+}
