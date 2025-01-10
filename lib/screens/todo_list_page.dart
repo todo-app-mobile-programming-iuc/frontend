@@ -3,6 +3,9 @@ import '../models/category.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import '../widgets/sound_selection_dialog.dart';
 import '../models/alarm_sound.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter_slidable/flutter_slidable.dart';
+import 'package:intl/intl.dart';
 
 class TodoListPage extends StatefulWidget {
   final TodoCategory category;
@@ -19,15 +22,26 @@ class TodoListPage extends StatefulWidget {
   _TodoListPageState createState() => _TodoListPageState();
 }
 
-class _TodoListPageState extends State<TodoListPage> {
+class _TodoListPageState extends State<TodoListPage> with TickerProviderStateMixin {
   final TextEditingController _textController = TextEditingController();
   final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin = 
       FlutterLocalNotificationsPlugin();
+  late AnimationController _addTodoController;
 
   @override
   void initState() {
     super.initState();
     _initializeNotifications();
+    _addTodoController = AnimationController(
+      duration: Duration(milliseconds: 200),
+      vsync: this,
+    );
+  }
+
+  @override
+  void dispose() {
+    _addTodoController.dispose();
+    super.dispose();
   }
 
   Future<void> _initializeNotifications() async {
@@ -255,123 +269,220 @@ class _TodoListPageState extends State<TodoListPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Color(0xFFF8F9FF),
       appBar: AppBar(
-        backgroundColor: Color(0xFFBFECFF),
+        elevation: 0,
+        backgroundColor: Colors.transparent,
         title: Text(
           widget.category.name,
-          style: TextStyle(color: Colors.black87),
-        ),
-        elevation: 0,
-      ),
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              Color(0xFFCDC1FF),
-              Color(0xFFF6E3FF),
-            ],
+          style: GoogleFonts.poppins(
+            color: Colors.black87,
+            fontWeight: FontWeight.w600,
           ),
         ),
-        child: Column(
-          children: [
-            Expanded(
-              child: ListView.builder(
-                itemCount: widget.category.todos.length,
-                itemBuilder: (context, index) {
-                  final todo = widget.category.todos[index];
-                  return _buildTodoItem(todo, index);
-                },
-              ),
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back_ios_new, color: Colors.black87),
+          onPressed: () => Navigator.pop(context),
+        ),
+      ),
+      body: Column(
+        children: [
+          Expanded(
+            child: widget.category.todos.isEmpty
+                ? Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.task_alt,
+                          size: 64,
+                          color: Color(0xFFCDC1FF).withOpacity(0.5),
+                        ),
+                        SizedBox(height: 16),
+                        Text(
+                          'No tasks yet',
+                          style: GoogleFonts.poppins(
+                            fontSize: 18,
+                            color: Colors.black54,
+                          ),
+                        ),
+                      ],
+                    ),
+                  )
+                : ListView.builder(
+                    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    itemCount: widget.category.todos.length,
+                    itemBuilder: (context, index) {
+                      final todo = widget.category.todos[index];
+                      return Padding(
+                        padding: EdgeInsets.only(bottom: 12),
+                        child: Slidable(
+                          endActionPane: ActionPane(
+                            motion: ScrollMotion(),
+                            children: [
+                              SlidableAction(
+                                onPressed: (context) => _removeTodo(index),
+                                backgroundColor: Color(0xFFFE4A49),
+                                foregroundColor: Colors.white,
+                                icon: Icons.delete,
+                                label: 'Delete',
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                            ],
+                          ),
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(16),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.05),
+                                  blurRadius: 10,
+                                  offset: Offset(0, 4),
+                                ),
+                              ],
+                            ),
+                            child: Material(
+                              color: Colors.transparent,
+                              child: InkWell(
+                                borderRadius: BorderRadius.circular(16),
+                                onTap: () => _editTodo(todo, index),
+                                child: Padding(
+                                  padding: EdgeInsets.all(16),
+                                  child: Row(
+                                    children: [
+                                      SizedBox(
+                                        width: 24,
+                                        height: 24,
+                                        child: Transform.scale(
+                                          scale: 1.2,
+                                          child: Checkbox(
+                                            value: todo.isCompleted,
+                                            onChanged: (bool? value) => _toggleTodo(index),
+                                            shape: CircleBorder(),
+                                            activeColor: Color(0xFFCDC1FF),
+                                          ),
+                                        ),
+                                      ),
+                                      SizedBox(width: 16),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              todo.title,
+                                              style: GoogleFonts.poppins(
+                                                fontSize: 16,
+                                                decoration: todo.isCompleted
+                                                    ? TextDecoration.lineThrough
+                                                    : null,
+                                                color: todo.isCompleted
+                                                    ? Colors.black38
+                                                    : Colors.black87,
+                                              ),
+                                            ),
+                                            if (todo.reminderDateTime != null)
+                                              Padding(
+                                                padding: EdgeInsets.only(top: 4),
+                                                child: Row(
+                                                  children: [
+                                                    Icon(
+                                                      Icons.access_time,
+                                                      size: 14,
+                                                      color: Color(0xFFCDC1FF),
+                                                    ),
+                                                    SizedBox(width: 4),
+                                                    Text(
+                                                      DateFormat('MMM d, h:mm a')
+                                                          .format(todo.reminderDateTime!),
+                                                      style: GoogleFonts.poppins(
+                                                        fontSize: 12,
+                                                        color: Colors.black54,
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                          ],
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+          ),
+          Container(
+            padding: EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.05),
+                  blurRadius: 10,
+                  offset: Offset(0, -4),
+                ),
+              ],
             ),
-            Container(
-              padding: const EdgeInsets.all(16.0),
-              decoration: BoxDecoration(
-                color: Color(0xFFBFECFF).withOpacity(0.9),
-                borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-              ),
-              child: Row(
-                children: [
-                  Expanded(
+            child: Row(
+              children: [
+                Expanded(
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: Color(0xFFF8F9FF),
+                      borderRadius: BorderRadius.circular(16),
+                    ),
                     child: TextField(
                       controller: _textController,
                       decoration: InputDecoration(
-                        hintText: 'Add a new todo',
-                        filled: true,
-                        fillColor: Colors.white,
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide.none,
-                        ),
-                        contentPadding: EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 14,
-                        ),
+                        hintText: 'Add a new task...',
+                        hintStyle: GoogleFonts.poppins(color: Colors.black38),
+                        border: InputBorder.none,
+                        contentPadding: EdgeInsets.symmetric(horizontal: 16),
                       ),
+                      style: GoogleFonts.poppins(),
                     ),
                   ),
-                  SizedBox(width: 12.0),
-                  Container(
-                    decoration: BoxDecoration(
-                      color: Color(0xFFF6E3FF),
-                      borderRadius: BorderRadius.circular(12),
+                ),
+                SizedBox(width: 12),
+                Container(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [Color(0xFFCDC1FF), Color(0xFFFFCCEA)],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
                     ),
-                    child: IconButton(
-                      onPressed: () {
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(12),
+                      onTap: () {
                         if (_textController.text.isNotEmpty) {
                           _addTodoWithReminder(_textController.text);
                         }
                       },
-                      icon: Icon(Icons.add),
-                      color: Colors.black87,
+                      child: Container(
+                        padding: EdgeInsets.all(12),
+                        child: Icon(
+                          Icons.add,
+                          color: Colors.white,
+                          size: 24,
+                        ),
+                      ),
                     ),
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildTodoItem(Todo todo, int index) {
-    return Card(
-      margin: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      color: Color(0xFFFFCCEA).withOpacity(0.9),
-      child: ListTile(
-        leading: Checkbox(
-          value: todo.isCompleted,
-          onChanged: (_) => _toggleTodo(index),
-        ),
-        title: Text(
-          todo.title,
-          style: TextStyle(
-            decoration: todo.isCompleted 
-                ? TextDecoration.lineThrough 
-                : null,
           ),
-        ),
-        subtitle: todo.reminderDateTime != null
-            ? Text(
-                'Reminder: ${todo.reminderDateTime!.toString().substring(0, 16)}',
-                style: TextStyle(fontSize: 12),
-              )
-            : null,
-        trailing: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            IconButton(
-              icon: Icon(Icons.edit),
-              onPressed: () => _editTodo(todo, index),
-            ),
-            IconButton(
-              icon: Icon(Icons.delete),
-              onPressed: () => _removeTodo(index),
-            ),
-          ],
-        ),
+        ],
       ),
     );
   }

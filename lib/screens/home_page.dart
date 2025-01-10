@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../models/task_list.dart';
 import '../models/category.dart';
 import 'todo_list_page.dart';
@@ -12,14 +13,31 @@ class HomePage extends StatefulWidget {
   _HomePageState createState() => _HomePageState();
 }
 
-class _HomePageState extends State<HomePage> {
+class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin {
   List<TaskList> taskLists = [];
   final TextEditingController _searchController = TextEditingController();
+  late AnimationController _fadeController;
+  late Animation<double> _fadeAnimation;
 
   @override
   void initState() {
     super.initState();
-    loadTodoLists();  // Load data when screen initializes
+    loadTodoLists();
+    _fadeController = AnimationController(
+      duration: Duration(milliseconds: 1000),
+      vsync: this,
+    );
+    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _fadeController, curve: Curves.easeOut),
+    );
+    _fadeController.forward();
+  }
+
+  @override
+  void dispose() {
+    _fadeController.dispose();
+    _searchController.dispose();
+    super.dispose();
   }
 
   void _addNewCategory() {
@@ -27,33 +45,80 @@ class _HomePageState extends State<HomePage> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('New Category'),
+        title: Text(
+          'New Category',
+          style: GoogleFonts.poppins(
+            fontWeight: FontWeight.w600,
+            color: Colors.black87,
+          ),
+        ),
         content: TextField(
           controller: categoryController,
           autofocus: true,
+          style: GoogleFonts.poppins(),
           decoration: InputDecoration(
             hintText: 'Enter category name',
-            border: OutlineInputBorder(),
+            hintStyle: GoogleFonts.poppins(color: Colors.black38),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(16),
+              borderSide: BorderSide(color: Color(0xFFCDC1FF)),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(16),
+              borderSide: BorderSide(color: Color(0xFFCDC1FF), width: 2),
+            ),
           ),
+        ),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text('Cancel'),
+            child: Text(
+              'Cancel',
+              style: GoogleFonts.poppins(
+                color: Colors.black54,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
           ),
-          TextButton(
-            onPressed: () {
-              if (categoryController.text.isNotEmpty) {
-                setState(() {
-                  taskLists.add(TaskList(
-                    name: categoryController.text,
-                    tasks: [],
-                  ));
-                });
-                Navigator.pop(context);
-              }
-            },
-            child: Text('Add'),
+          Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [Color(0xFFCDC1FF), Color(0xFFFFCCEA)],
+                begin: Alignment.centerLeft,
+                end: Alignment.centerRight,
+              ),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                borderRadius: BorderRadius.circular(12),
+                onTap: () {
+                  if (categoryController.text.isNotEmpty) {
+                    setState(() {
+                      taskLists.add(TaskList(
+                        name: categoryController.text,
+                        tasks: [],
+                      ));
+                    });
+                    Navigator.pop(context);
+                  }
+                },
+                child: Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  child: Text(
+                    'Add',
+                    style: GoogleFonts.poppins(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ),
+            ),
           ),
         ],
       ),
@@ -71,88 +136,138 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Color(0xFFF5F5F0),
-      drawer: Drawer(
-        child: Container(
-          color: Color(0xFFF5F5F0),
-          child: ListView(
-            padding: EdgeInsets.zero,
+      backgroundColor: Color(0xFFF8F9FF),
+      drawer: _buildDrawer(),
+      body: SafeArea(
+        child: FadeTransition(
+          opacity: _fadeAnimation,
+          child: Column(
             children: [
-              DrawerHeader(
-                decoration: BoxDecoration(
-                  color: Color(0xFFBFECFF),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    Text(
-                      'Yetiştir',
-                      style: TextStyle(
-                        color: Colors.black87,
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    SizedBox(height: 8),
-                  ],
-                ),
-              ),
-              ListTile(
-                leading: Icon(Icons.alarm, color: Colors.black87),
-                title: Text(
-                  'Alarms',
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: Colors.black87,
-                  ),
-                ),
-                onTap: () {
-                  Navigator.pop(context); // Close drawer
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => AlarmPage()),
-                  );
-                },
-              ),
-              ListTile(
-                leading: Icon(Icons.psychology, color: Colors.black87),
-                title: Text(
-                  'AI Assistant',
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: Colors.black87,
-                  ),
-                ),
-                onTap: () {
-                  Navigator.pop(context); // Close drawer
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => AIPage()),
-                  );
-                },
+              _buildTopBar(),
+              _buildSearchBar(),
+              Expanded(
+                child: taskLists.isEmpty 
+                    ? _buildEmptyState()
+                    : _buildGridView(),
               ),
             ],
           ),
         ),
       ),
-      body: SafeArea(
-        child: Column(
-          children: [
-            _buildTopBar(),
-            _buildSearchBar(),
-            Expanded(
-              child: taskLists.isEmpty 
-                  ? _buildEmptyState()
-                  : _buildGridView(),
+      floatingActionButton: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [Color(0xFFCDC1FF), Color(0xFFFFCCEA)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Color(0xFFCDC1FF).withOpacity(0.3),
+              blurRadius: 8,
+              offset: Offset(0, 4),
             ),
           ],
         ),
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            borderRadius: BorderRadius.circular(16),
+            onTap: _addNewCategory,
+            child: Container(
+              padding: EdgeInsets.all(16),
+              child: Icon(
+                Icons.add,
+                color: Colors.white,
+                size: 32,
+              ),
+            ),
+          ),
+        ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _addNewCategory,
-        backgroundColor: Color(0xFFFFCCEA),
-        child: Icon(Icons.add, color: Colors.black87),
+    );
+  }
+
+  Widget _buildDrawer() {
+    return Drawer(
+      child: Container(
+        color: Colors.white,
+        child: Column(
+          children: [
+            Container(
+              padding: EdgeInsets.symmetric(horizontal: 24, vertical: 40),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [Color(0xFFCDC1FF), Color(0xFFFFCCEA)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+              ),
+              child: SafeArea(
+                child: Row(
+                  children: [
+                    Container(
+                      padding: EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        Icons.check_circle_outline,
+                        color: Color(0xFFCDC1FF),
+                        size: 32,
+                      ),
+                    ),
+                    SizedBox(width: 16),
+                    Text(
+                      'Yetiştir',
+                      style: GoogleFonts.poppins(
+                        color: Colors.white,
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            ListTile(
+              leading: Icon(Icons.alarm, color: Color(0xFFCDC1FF)),
+              title: Text(
+                'Alarms',
+                style: GoogleFonts.poppins(
+                  fontSize: 16,
+                  color: Colors.black87,
+                ),
+              ),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => AlarmPage()),
+                );
+              },
+            ),
+            ListTile(
+              leading: Icon(Icons.psychology, color: Color(0xFFCDC1FF)),
+              title: Text(
+                'AI Assistant',
+                style: GoogleFonts.poppins(
+                  fontSize: 16,
+                  color: Colors.black87,
+                ),
+              ),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => AIPage()),
+                );
+              },
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -163,19 +278,33 @@ class _HomePageState extends State<HomePage> {
       child: Builder(
         builder: (context) => Row(
           children: [
-            IconButton(
-              icon: Icon(Icons.menu),
-              onPressed: () {
-                Scaffold.of(context).openDrawer();
-              },
+            Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 10,
+                    offset: Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: IconButton(
+                icon: Icon(Icons.menu, color: Colors.black87),
+                onPressed: () {
+                  Scaffold.of(context).openDrawer();
+                },
+              ),
             ),
             Expanded(
               child: Center(
                 child: Text(
                   'Yetiştir',
-                  style: TextStyle(
+                  style: GoogleFonts.poppins(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
+                    color: Colors.black87,
                   ),
                 ),
               ),
@@ -187,10 +316,27 @@ class _HomePageState extends State<HomePage> {
                   MaterialPageRoute(builder: (context) => ProfilePage()),
                 );
               },
-              child: CircleAvatar(
-                radius: 20,
-                backgroundColor: Color(0xFFCDC1FF),
-                child: Icon(Icons.person, color: Colors.black87),
+              child: Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [Color(0xFFCDC1FF), Color(0xFFFFCCEA)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Color(0xFFCDC1FF).withOpacity(0.3),
+                      blurRadius: 8,
+                      offset: Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: CircleAvatar(
+                  radius: 20,
+                  backgroundColor: Colors.transparent,
+                  child: Icon(Icons.person, color: Colors.white),
+                ),
               ),
             ),
           ],
@@ -202,18 +348,33 @@ class _HomePageState extends State<HomePage> {
   Widget _buildSearchBar() {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-      child: TextField(
-        controller: _searchController,
-        decoration: InputDecoration(
-          filled: true,
-          fillColor: Colors.white,
-          prefixIcon: Icon(Icons.search, color: Colors.grey),
-          hintText: 'Search lists...',
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide.none,
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 10,
+              offset: Offset(0, 4),
+            ),
+          ],
+        ),
+        child: TextField(
+          controller: _searchController,
+          style: GoogleFonts.poppins(),
+          decoration: InputDecoration(
+            filled: true,
+            fillColor: Colors.white,
+            prefixIcon: Icon(Icons.search, color: Color(0xFFCDC1FF)),
+            hintText: 'Search lists...',
+            hintStyle: GoogleFonts.poppins(color: Colors.black38),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(16),
+              borderSide: BorderSide.none,
+            ),
+            contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           ),
-          contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         ),
       ),
     );
@@ -224,25 +385,33 @@ class _HomePageState extends State<HomePage> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            Icons.list_alt,
-            size: 64,
-            color: Colors.grey,
+          Container(
+            padding: EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              color: Color(0xFFCDC1FF).withOpacity(0.1),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              Icons.list_alt,
+              size: 64,
+              color: Color(0xFFCDC1FF),
+            ),
           ),
-          SizedBox(height: 16),
+          SizedBox(height: 24),
           Text(
             'No categories yet',
-            style: TextStyle(
-              fontSize: 18,
-              color: Colors.grey,
+            style: GoogleFonts.poppins(
+              fontSize: 20,
+              fontWeight: FontWeight.w600,
+              color: Colors.black87,
             ),
           ),
           SizedBox(height: 8),
           Text(
             'Tap + to add a new category',
-            style: TextStyle(
-              fontSize: 14,
-              color: Colors.grey,
+            style: GoogleFonts.poppins(
+              fontSize: 16,
+              color: Colors.black54,
             ),
           ),
         ],
@@ -356,11 +525,5 @@ class _HomePageState extends State<HomePage> {
         ),
       ),
     );
-  }
-
-  @override
-  void dispose() {
-    _searchController.dispose();
-    super.dispose();
   }
 } 
